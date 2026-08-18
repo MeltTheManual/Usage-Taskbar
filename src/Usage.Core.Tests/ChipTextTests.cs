@@ -1,0 +1,118 @@
+using Usage.Core;
+using Xunit;
+
+namespace Usage.Core.Tests;
+
+public class ChipTextTests
+{
+    [Fact]
+    public void Formats_whole_remaining_percent()
+    {
+        var reading = new ProviderReading(ReadingStatus.Ok, 24.4, null, null, null);
+        Assert.Equal("Codex 24%", ChipText.FormatProvider("Codex", reading));
+    }
+
+    [Fact]
+    public void Formats_sign_in_without_a_number()
+    {
+        Assert.Equal("Claude sign in", ChipText.FormatProvider("Claude", ProviderReading.SignIn()));
+        // A tool that is not on this PC produces no text at all, so callers can drop it without special cases.
+        Assert.Equal("", ChipText.FormatProvider("Codex", ProviderReading.NotInstalled()));
+        Assert.Equal("", ChipText.MenuText("Codex", ProviderReading.NotInstalled()));
+    }
+
+    [Fact]
+    public void Marks_low_remaining()
+    {
+        var reading = new ProviderReading(ReadingStatus.Ok, 19, null, null, null);
+        Assert.True(reading.IsLow);
+        Assert.False(new ProviderReading(ReadingStatus.Ok, 20, null, null, null).IsLow);
+    }
+
+    [Fact]
+    public void Converts_used_percent_to_remaining()
+    {
+        Assert.Equal(24, RemainingClient.RemainingFromUsed(76));
+        Assert.True(RemainingClient.IsWeeklyWindow(604800));
+        Assert.False(RemainingClient.IsWeeklyWindow(18000));
+    }
+
+    [Fact]
+    public void Hover_shows_a_meter_for_each_window_that_was_reported()
+    {
+        // Claude reports a five-hour window, so its card draws a session meter as well as a weekly one.
+        var reading = new ProviderReading(
+            ReadingStatus.Ok,
+            45,
+            DateTimeOffset.Parse("2026-08-18T22:00:00Z"),
+            33,
+            DateTimeOffset.Parse("2026-08-15T20:40:00Z"));
+
+        var windows = ChipText.Windows(reading);
+
+        Assert.Equal(2, windows.Count);
+        Assert.Equal("This week", windows[0].Label);
+        Assert.Equal(45, windows[0].Remaining);
+        Assert.Equal("This 5 hours", windows[1].Label);
+        Assert.Equal(33, windows[1].Remaining);
+    }
+
+    [Fact]
+    public void Hover_leaves_out_a_session_window_that_was_never_reported()
+    {
+        // Codex reported no five-hour window. A missing window must vanish, never appear as an empty meter.
+        var reading = new ProviderReading(ReadingStatus.Ok, 14, DateTimeOffset.Parse("2026-08-20T10:49:56Z"), null, null);
+
+        var windows = ChipText.Windows(reading);
+
+        Assert.Single(windows);
+        Assert.Equal("This week", windows[0].Label);
+        Assert.DoesNotContain(windows, w => w.Label.Contains("5 hours", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void A_window_below_the_threshold_is_marked_low_so_its_meter_turns_amber()
+    {
+        Assert.True(new RemainingWindow("This week", 2, null).IsLow);
+        Assert.True(new RemainingWindow("This 5 hours", 19, null).IsLow);
+        Assert.False(new RemainingWindow("This week", 20, null).IsLow);
+        Assert.False(new RemainingWindow("This 5 hours", 88, null).IsLow);
+    }
+
+    [Fact]
+    public void Reset_text_is_omitted_when_the_source_did_not_give_one()
+    {
+        Assert.Equal("", ChipText.ResetText(null));
+        Assert.StartsWith("resets ", ChipText.ResetText(DateTimeOffset.Parse("2026-08-18T22:00:00Z")));
+    }
+
+    [Fact]
+    public void Hover_draws_no_meters_at_all_when_the_reading_failed()
+    {
+        foreach (var reading in new[] { ProviderReading.SignIn(), ProviderReading.Stale(), ProviderReading.Unavailable() })
+        {
+            Assert.Empty(ChipText.Windows(reading));
+            Assert.NotEmpty(ChipText.StatusLine(reading));
+        }
+
+        Assert.Equal("Sign in needed", ChipText.StatusLine(ProviderReading.SignIn()));
+    }
+
+    [Fact]
+    public void Percent_is_a_whole_number()
+    {
+        Assert.Equal("45%", ChipText.Percent(44.6));
+        Assert.Equal("2%", ChipText.Percent(2));
+        Assert.Equal("100%", ChipText.Percent(100));
+    }
+
+    [Fact]
+    public void Menu_line_adds_the_session_window_only_when_it_was_reported()
+    {
+        var withSession = new ProviderReading(ReadingStatus.Ok, 49, null, 88, null);
+        Assert.Contains("88% this 5 hours", ChipText.MenuText("Claude", withSession));
+
+        var withoutSession = new ProviderReading(ReadingStatus.Ok, 17, null, null, null);
+        Assert.DoesNotContain("5 hours", ChipText.MenuText("Codex", withoutSession));
+    }
+}

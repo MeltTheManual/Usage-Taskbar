@@ -1,0 +1,36 @@
+bin/
+obj/
+dist/
+out/
+build/
+coverage/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+*.log
+
+.env
+.env.*
+!.env.example
+
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+.DS_Store
+Thumbs.db
+
+# Never commit live login material, even if someone copies it here.
+.credentials.json
+auth.json
+*.pfx
+*.key
+
+# Grok project-local state can contain machine-specific settings or permissions.
+.grok/
+# Optional Claude Code compatibility state.
+.claude/
+.obsidian/
