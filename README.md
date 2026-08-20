@@ -132,8 +132,9 @@ not get to touch another program's login.
 Usage also writes a small log to `%TEMP%\Usage.log`. It contains short status words and error types only. Never
 tokens.
 
-If you would rather check all this yourself than trust a README, that is exactly the right instinct. The whole
-project is about 1,500 lines. Start with `src/Usage.Core/RemainingClient.cs`.
+If you would rather check all this yourself than trust a README, that is exactly the right instinct. There is
+not much to read: about 1,800 lines of actual program, plus its tests. Start with
+`src/Usage.Core/RemainingClient.cs`, which is the only file that touches those login files or the network.
 
 ## What is tested, and what is not
 
