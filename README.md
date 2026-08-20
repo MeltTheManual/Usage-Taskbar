@@ -1,169 +1,257 @@
 # Usage
 
-A small always-on readout of how much Claude Code and Codex you have left, parked on your Windows taskbar just
-left of the clock.
+**See how much Claude Code and Codex you have left, without stopping to check.**
+
+Usage puts one short line of text on your Windows taskbar, just to the left of the clock:
 
 ```
 Claude 45% · Codex 14%
 ```
 
-Those are percentages **remaining**, not spent. Hover the text for a card with a meter per limit window and the
-exact time each one resets. Right-click it for a manual refresh, a start-with-Windows toggle, and quit.
+Those numbers are how much you have **left**, not how much you have used. So 45% means you still have 45% of
+your weekly allowance to spend.
+
+That is the whole idea. The number sits somewhere you already look, so you stop guessing and you stop getting
+surprised by a limit you did not see coming.
+
+## What you get
+
+**The line on the taskbar.** Always there. It updates itself every few minutes.
+
+**Hover your mouse over it** and a small card appears with the detail:
 
 ![The hover card](docs/hover-card.png)
 
-## Why
+Each bar is one limit. It shows how much is left and the exact time it refills.
 
-Both tools tell you where you stand only if you go and ask them. If you work in them all day you end up either
-checking constantly or getting surprised by a wall. This puts the number somewhere you already look, and it
-never guesses: if a reading cannot be trusted it says so in words instead of showing a stale percent.
+Claude has two limits, so it gets two bars:
+
+- **This week** is your weekly allowance.
+- **This 5 hours** is a shorter limit that refills more often, roughly every five hours.
+
+Codex only reports a weekly limit, so it only gets one bar. Usage never invents a bar for something a provider
+did not actually report.
+
+**Right-click the line** for a small menu: the current numbers, a **Refresh now** button, a **Start with
+Windows** switch, and **Quit**.
+
+If a number cannot be read for some reason, Usage says so in words. It will never show you an old number and
+pretend it is current.
 
 ## Install
 
 1. Download `Usage-Setup-1.0.0.exe` from the
-   [latest release](https://github.com/MeltTheManual/usage-taskbar/releases/latest).
-2. Run it and pick where to install.
+   [latest release](https://github.com/MeltTheManual/Usage-Taskbar/releases/latest).
+2. Run it and follow the steps.
 
-A normal installer. It asks for a location, adds a Start Menu entry so you can find it by typing "Usage", and
-registers properly in Add or Remove Programs. Nothing else is needed: .NET is built into the app, so there is
-no runtime to install separately.
+It is a normal Windows installer. It asks where you want the app, then it:
 
-It installs for the current user by default, so there is no admin prompt. You can choose an all-users install
-from the wizard if you would rather have it in Program Files.
+- puts the app in the folder you chose
+- adds it to your Start Menu, so later you can press Start, type "Usage", and open it
+- adds it to **Add or Remove Programs**, so you can uninstall it the normal Windows way
 
-It starts with Windows from then on. You can turn that off from the right-click menu and it will stay off, and
-you can always start it again from the Start Menu.
+There is nothing else to download. .NET is built into the app itself, so you do not need to install a runtime or
+any other extra piece.
 
-**To remove it:** Add or Remove Programs, or the uninstaller in the install folder. It stops the app, deletes
-its files, removes the Start Menu shortcut, clears the startup entry, and removes its small settings folder at
-`%LOCALAPPDATA%\Usage`. Nothing is left behind.
+By default it installs **just for you**, so Windows will not ask for administrator permission. If you would
+rather install it for everyone who uses the PC, the installer offers that too, and then it goes into Program
+Files.
 
-**There is nothing to configure.** It finds whatever is already signed in on your account and shows that. If you
-only use one of the two tools, the other one simply does not appear: no empty row, no "sign in" nag telling you
-to install something you never asked for. If neither is present it says so once instead of pretending.
+### About the blue warning
 
-You need to already be signed in to Claude Code or Codex, or both. Usage does not have a login of its own and
-will never ask you for one. It reads whatever the current Windows user has, so on a shared PC each person sees
-only their own numbers.
+When you run the installer, Windows will probably show a blue box saying the publisher is unrecognised.
 
-## What it reads, and what it will never do
+That happens because the file is not code signed. Signing costs money every year, and this is a free side
+project, so it is not signed. Click **More info**, then **Run anyway**.
 
-This app looks at the login files the official CLIs keep on your machine, so it is worth being precise about
-what that means.
+If you would rather check before trusting it, the release notes list the file's SHA256, which is a fingerprint
+of the exact file that was published. You can compare it with this in PowerShell:
 
-It reads exactly two files, and only reads them:
+```powershell
+Get-FileHash .\Usage-Setup-1.0.0.exe -Algorithm SHA256
+```
+
+If the two match, the file you downloaded is exactly the one that was published.
+
+### After installing
+
+Usage starts automatically every time you sign in to Windows.
+
+You can turn that off from the right-click menu, and it will stay off. It will not quietly switch itself back
+on. If you ever want it again, open it from the Start Menu.
+
+## There is nothing to set up
+
+No settings. No config file. No account, and no sign-in.
+
+Usage reads the login that Claude Code and Codex already keep on your PC. If you are signed in to those tools,
+it just works.
+
+**If you only use one of them, the other simply does not appear.** No blank space, no error message, and no nag
+telling you to install something you never wanted. If neither one is on your PC, Usage says so once rather than
+pretending it knows something.
+
+It reads what the **currently signed in Windows user** has. So if two people share a PC, each of them sees only
+their own numbers.
+
+## Is it safe?
+
+A fair question, and you should ask it. This app reads login files belonging to other programs. Here is the
+straight answer.
+
+**It reads exactly two files, and it only ever reads them:**
 
 - `%USERPROFILE%\.claude\.credentials.json`
 - `%USERPROFILE%\.codex\auth.json`
 
-`%USERPROFILE%` is resolved at runtime from whoever is running the app, so nothing about any other machine or
-account is baked into the build. There is no account id, licence key, or install fingerprint anywhere in it.
+`%USERPROFILE%` means your own user folder. It is worked out while the app is running, on your machine. Nothing
+about any other computer or account is built into the download.
 
-It sends the access token it finds to exactly two places, which are the same endpoints the official tools use:
+**It sends your access token to exactly two addresses,** the same ones the official tools already use to check
+your usage:
 
 - `https://api.anthropic.com/api/oauth/usage`
 - `https://chatgpt.com/backend-api/wham/usage`
 
-It never writes to those files, never refreshes or rotates your tokens, and never sends them anywhere else.
-There is no telemetry, no analytics, and no server belonging to this project. Nothing leaves your machine
-except those two requests.
+**What it never does:**
 
-That read-only rule is enforced by a test, not just by good intentions. `Never_writes_to_the_login_files` fails
-the build if any outbound write is attempted, and it compares the bytes and modification times of both login
-files across a full fetch. Earlier versions did try to refresh expiring tokens. That was removed on purpose:
-Anthropic rotates refresh tokens as single use, so a successful refresh here would have invalidated the copy
-Claude Code was holding and could have signed you out of the tool you were working in. An observer does not get
-to touch another program's credentials.
+- It never writes to those login files.
+- It never refreshes, changes, or replaces your tokens.
+- It never sends them anywhere except the two addresses above.
+- There is no tracking, no analytics, and no server belonging to this project.
 
-The log it writes to `%TEMP%\Usage.log` records status words and exception types only. No tokens, ever.
+That read-only rule is not just a promise in a README. There is a test called `Never_writes_to_the_login_files`
+that fails the build if any write is attempted. It also compares both login files byte for byte before and
+after a full check, to prove nothing changed.
 
-If you would rather check all of that yourself than take a README's word for it, that is the correct instinct
-and the whole thing is about 1,500 lines. Start at `src/Usage.Core/RemainingClient.cs`.
+An earlier version did try to refresh tokens that looked expired, and that was removed on purpose. Anthropic
+treats a refresh token as single use. Refreshing it here would have quietly broken the copy Claude Code was
+holding, and could have signed you out of the tool you were working in. A program that is only watching does
+not get to touch another program's login.
 
-## Requirements
+Usage also writes a small log to `%TEMP%\Usage.log`. It contains short status words and error types only. Never
+tokens.
 
-- Windows. Built and used daily on Windows 11.
-- Claude Code or Codex already signed in.
+If you would rather check all this yourself than trust a README, that is exactly the right instinct. There is
+not much to read: about 1,800 lines of actual program, plus its tests. Start with
+`src/Usage.Core/RemainingClient.cs`, which is the only file that touches those login files or the network.
 
-Honest limits: this was written for one machine and then made public, so the tested surface is narrow. It has
-only been run at 100% display scaling, and on multi-monitor setups it follows the primary taskbar. Windows 10
-is untested. If it misbehaves on your setup, an issue with your Windows version, scaling, and taskbar position
-is genuinely useful.
+## What is tested, and what is not
 
-## Build from source
+Being honest about this matters more than looking polished.
 
-Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+This was written for one computer and then shared. It has only really been used on:
+
+- Windows 11
+- 100% display scaling
+- a single monitor
+- the taskbar along the bottom of the screen
+
+**Not tested, and the most likely places it goes wrong:**
+
+- display scaling at 125%, 150%, or anything other than 100%
+- more than one monitor, because it follows your main taskbar only
+- a taskbar placed on the left, the right, or the top
+- Windows 10
+- tools that replace the Windows taskbar, such as ExplorerPatcher or StartAllBack
+
+The part most likely to break is **where the text is positioned**. If it lands in the wrong place, or you cannot
+see it at all, please open an issue and say which of the above applies to you. Right now that is genuinely the
+most useful bug report anyone can send.
+
+## Uninstall
+
+Open **Add or Remove Programs** in Windows Settings, find Usage, and remove it. You can also run the uninstaller
+inside the install folder.
+
+It cleans up after itself completely: the program files, the Start Menu shortcut, the start-with-Windows entry,
+and its small settings folder at `%LOCALAPPDATA%\Usage`.
+
+Your Claude Code and Codex logins are left exactly as they were, because Usage never changed them in the first
+place.
+
+## Build it yourself
+
+You need the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```powershell
-dotnet test Usage.sln -c Release             # 26 tests
-powershell -File scripts\Publish-Usage.ps1   # fast local build, needs .NET installed to run
-powershell -File scripts\Publish-Release.ps1 # the self-contained single file
-powershell -File scripts\Build-Installer.ps1 # the installer that ships
+dotnet test Usage.sln -c Release             # run the tests
+powershell -File scripts\Publish-Usage.ps1   # quick build, for working on the code
+powershell -File scripts\Publish-Release.ps1 # the single self-contained exe
+powershell -File scripts\Build-Installer.ps1 # the installer that people download
 ```
 
-`Publish-Usage.ps1` writes a small framework-dependent build to `dist\`. `Publish-Release.ps1` writes the
-single self-contained `Usage.exe` to `out\release\` and prints its SHA256. `Build-Installer.ps1` republishes
-that exe and wraps it with [Inno Setup](https://jrsoftware.org/isinfo.php), which you will need installed
-(`winget install --id JRSoftware.InnoSetup -e`).
+- `Publish-Usage.ps1` makes a small build in `dist\`. It needs .NET already installed in order to run.
+- `Publish-Release.ps1` makes the one large `Usage.exe` in `out\release\`, with .NET packed inside it, and
+  prints its SHA256.
+- `Build-Installer.ps1` rebuilds that exe and then wraps it using
+  [Inno Setup](https://jrsoftware.org/isinfo.php). You need Inno Setup first:
+  `winget install --id JRSoftware.InnoSetup -e`.
 
-The app does not care where it is installed. It works out its own location from the running exe, and anything
-it writes at runtime goes to `%LOCALAPPDATA%\Usage` instead of next to the exe, so an install into Program
-Files behaves the same as a per-user one.
+**About `installer/Usage.iss`:** that file is not the installer. It is the recipe for building one. `.iss`
+stands for Inno Setup Script, and it lists what to install, where to put it, which shortcuts to create, and
+what to clean up when someone uninstalls. The finished installer is the `.exe` on the releases page. Program
+files do not belong in a code repository, so the recipe lives here and the result lives there.
 
-There is also a probe that prints the readings once and exits, which is the fastest way to tell a bad reading
-apart from a bad display:
+Two extra tools that help when changing things:
 
 ```powershell
+# Print the readings once and exit. The fastest way to tell a bad reading from a bad display.
 dotnet run --project src\Usage.Probe\Usage.Probe.csproj -c Release
+
+# Save the hover card as an image, so you can work on its design without holding the mouse still on a tooltip.
+out\release\Usage.exe --card-preview card.png           # your real numbers
+out\release\Usage.exe --card-preview card.png --sample  # made up numbers, for screenshots
+
+# Stop a running copy from anywhere. The installer uses this, so it never has to force-kill anything.
+Usage.exe --quit
 ```
 
-And a switch that renders the hover card to an image with live numbers, so you can work on its design without
-holding a mouse still over a tooltip:
+## How it works inside
 
-```powershell
-out\release\Usage.exe --card-preview card.png           # live numbers
-out\release\Usage.exe --card-preview card.png --sample  # invented numbers, for screenshots
-```
+Useful if you want to change something.
 
-`Usage.exe --quit` stops a running copy from outside, which is what the installer and uninstaller use so they
-never have to kill anything.
+**Two processes, on purpose.** One draws the line of text (`--ui`). The other does nothing except restart it if
+it ever dies (`--watch`). Seeing two `Usage` entries in Task Manager is normal, not a bug.
 
-## How it works, and the one trap worth knowing
+**It is a floating window, not a tray icon.** Notification-area icons were tried first and rejected, because
+Windows hides them behind the little arrow, and an icon cannot show two changing numbers.
 
-Two processes. `--ui` draws the chip, `--watch` does nothing but restart the chip if it dies. Seeing two
-`Usage` entries in Task Manager is correct.
+**It does not care where it is installed.** It works out its own location from the running file. Anything it
+writes goes to `%LOCALAPPDATA%\Usage`, never next to the program itself. That is what lets it behave the same
+whether it sits in Program Files or in your own user folder.
 
-The chip is a borderless always-on-top window positioned next to the clock, not a notification-area icon.
-Notification icons were tried first and rejected, because Windows hides them behind the overflow arrow and an
-icon cannot show two changing numbers.
+### One trap, if you touch the window code
 
-**The trap, if you are going to touch the window code:** the taskbar is topmost too. `WS_EX_TOPMOST` is
-membership of a band, not rank within it, and Explorer re-promotes the taskbar above everything in that band
-whenever a full-screen app appears or leaves. So the chip does not stop painting, it gets buried, and it looks
-identical to a rendering bug. `RaiseAboveTaskbar` re-asserts rank on every 250ms tick to heal it. Also, never
-set that style with `SetWindowLongPtr` and believe the result: it reports the style back without applying it,
-so the window reads as `TOPMOST=True` while sitting underneath the taskbar. That one cost four wrong diagnoses.
+The Windows taskbar is also an "always on top" window. Being always on top is a group, not a ranking inside that
+group. Every time a full-screen app opens or closes, Windows pushes the taskbar back above everything else in
+that group, including our text.
 
-## Support, honestly
+So the text does not stop drawing. It gets **buried underneath the taskbar**. That looks exactly like a drawing
+bug, and it is not one. `RaiseAboveTaskbar` fixes it by re-claiming its position four times a second.
 
-This was built for one machine and then shared because it might be useful to someone else. It is a side
-project, not a product with a support team, so replies may be slow and some things may never get fixed.
-
-Bug reports are genuinely welcome all the same, and the most useful ones are about setups I could not test:
-display scaling other than 100%, multiple monitors, a taskbar that is not at the bottom, Windows 10, or shell
-replacements like ExplorerPatcher. If the chip lands in the wrong place or does not show up, please say which
-of those applies to you.
+Also: never set that always-on-top style using `SetWindowLongPtr` and trust the result. It reports the style
+back to you as though it worked, while actually doing nothing. That one detail caused four wrong diagnoses in a
+row.
 
 ## Contributing
 
-Issues and pull requests are welcome. Two things will make a change much easier to accept:
+Issues and pull requests are welcome. Two things make a change much easier to accept:
 
-- Keep the app read-only with respect to the login files. That rule is not up for discussion, and there is a
-  test that will stop you anyway.
-- Never show a number that might not be true. If a reading fails, the honest status word is the feature.
+- **Keep it read-only.** The app must never write to the login files. This one is not up for discussion, and
+  there is a test that will stop you anyway.
+- **Never show a number that might not be true.** If a reading fails, saying so honestly is the feature, not a
+  fallback.
 
-`dotnet test Usage.sln -c Release` should pass before and after your change.
+Please check that `dotnet test Usage.sln -c Release` passes before and after your change.
+
+## Support
+
+This was built for one person's own machine and shared in case it is useful to someone else. It is a side
+project, not a product with a support team, so replies may be slow and some things may never get fixed.
+
+Bug reports are still genuinely welcome, especially about the untested setups listed above.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT, which means you can use, change, and share it freely. See [LICENSE](LICENSE).
