@@ -13,7 +13,7 @@
 #define AppName "Usage"
 #define AppVersion "1.0.0"
 #define AppPublisher "MeltTheManual"
-#define AppUrl "https://github.com/MeltTheManual/usage-taskbar"
+#define AppUrl "https://github.com/MeltTheManual/Usage-Taskbar"
 #define AppExe "Usage.exe"
 
 [Setup]
