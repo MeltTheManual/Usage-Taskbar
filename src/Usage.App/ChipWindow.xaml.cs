@@ -31,6 +31,14 @@ internal partial class ChipWindow : Window
     private static readonly Brush LowBrush = Frozen(Color.FromRgb(255, 176, 32));
     private static readonly Brush QuietBrush = Frozen(Color.FromRgb(154, 160, 166));
 
+    // The chip's three bands, settled on 2026-08-25 after a four-band version was built and dropped.
+    // Three colours are far enough apart that no two of them can be confused, which four never quite managed.
+    // Plenty is deliberately a soft green rather than a vivid one: most of the time nothing is wrong, and the
+    // chip should not keep announcing that. The hover card keeps OkBrush and LowBrush and is untouched.
+    private static readonly Brush ChipPlentyBrush = Frozen(Color.FromRgb(143, 214, 162));
+    private static readonly Brush ChipFairBrush = Frozen(Color.FromRgb(255, 213, 79));
+    private static readonly Brush ChipLowBrush = Frozen(Color.FromRgb(255, 69, 58));
+
     private static readonly Brush CardBrush = Frozen(Color.FromRgb(42, 42, 42));
     private static readonly Brush CardBorderBrush = Frozen(Color.FromRgb(61, 61, 61));
     private static readonly Brush DividerBrush = Frozen(Color.FromRgb(56, 56, 56));
@@ -113,11 +121,19 @@ internal partial class ChipWindow : Window
         run.Text = ChipText.FormatProvider(name, reading);
         run.Foreground = reading.Status switch
         {
-            ReadingStatus.Ok when reading.IsLow => LowBrush,
+            ReadingStatus.Ok when reading.WeeklyRemaining is { } remaining => LevelBrush(ChipText.LevelFor(remaining)),
+            // Ok with no weekly number prints "--", which is not a reading worth colouring.
             ReadingStatus.Ok => OkBrush,
             _ => QuietBrush
         };
     }
+
+    private static Brush LevelBrush(ChipLevel level) => level switch
+    {
+        ChipLevel.Plenty => ChipPlentyBrush,
+        ChipLevel.Fair => ChipFairBrush,
+        _ => ChipLowBrush
+    };
 
     private static ToolTip BuildHoverCard(RemainingSnapshot snapshot)
     {
