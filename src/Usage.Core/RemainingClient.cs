@@ -19,7 +19,13 @@ namespace Usage.Core;
 /// </summary>
 public sealed class RemainingClient : IDisposable
 {
-    public const double LowRemainingThreshold = 20;
+    /// <summary>
+    /// Under this, everything that can warn does: the chip turns red and the card turns amber. Deliberately
+    /// one number rather than two that happen to agree. The chip and the card briefly carried separate
+    /// thresholds, which left a thin sliver where a red taskbar sat beside a calm card. It was 20 before
+    /// 2026-08-25.
+    /// </summary>
+    public const double LowRemainingThreshold = 25;
     public static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(3);
 
     internal const string ClaudeUsageUrl = "https://api.anthropic.com/api/oauth/usage";

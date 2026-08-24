@@ -16,6 +16,24 @@ public enum ReadingStatus
     NotInstalled
 }
 
+/// <summary>
+/// How full a provider still is, in the three steps the taskbar chip paints itself by.
+///
+/// The card does not paint itself in these three colours, but it does read the bottom band: its amber warning
+/// starts at exactly the same moment the chip turns red, off exactly the same rounded number.
+/// </summary>
+public enum ChipLevel
+{
+    /// <summary>Under 25% left. Red, and meant to be read as a warning.</summary>
+    Low,
+
+    /// <summary>25% up to 75% left. Yellow.</summary>
+    Fair,
+
+    /// <summary>75% or more left. A soft light green that is not trying to catch the eye.</summary>
+    Plenty
+}
+
 public sealed record ProviderReading(
     ReadingStatus Status,
     double? WeeklyRemaining,
@@ -38,9 +56,13 @@ public sealed record ProviderReading(
     /// <summary>True when this provider should not appear anywhere in the UI at all.</summary>
     public bool IsHidden => Status == ReadingStatus.NotInstalled;
 
+    /// <summary>
+    /// True once this provider is low enough to warn about. It defers to the chip's own band function, so the
+    /// card can never warn at a different moment, or off a different number, than the taskbar text does.
+    /// </summary>
     public bool IsLow => Status == ReadingStatus.Ok
         && WeeklyRemaining is { } remaining
-        && remaining < RemainingClient.LowRemainingThreshold;
+        && ChipText.LevelFor(remaining) == ChipLevel.Low;
 }
 
 public sealed record RemainingSnapshot(ProviderReading Claude, ProviderReading Codex);
@@ -52,5 +74,5 @@ public sealed record RemainingSnapshot(ProviderReading Claude, ProviderReading C
 /// </summary>
 public sealed record RemainingWindow(string Label, double Remaining, DateTimeOffset? ResetsAt)
 {
-    public bool IsLow => Remaining < RemainingClient.LowRemainingThreshold;
+    public bool IsLow => ChipText.LevelFor(Remaining) == ChipLevel.Low;
 }

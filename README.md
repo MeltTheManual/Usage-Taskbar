@@ -18,16 +18,28 @@ surprised by a limit you did not see coming.
 
 **The line on the taskbar.** Always there. It updates itself every few minutes.
 
+**Each number is coloured by how much is left**, so you can read it without really reading it:
+
+| Left | Colour |
+| --- | --- |
+| 75% and up | light green |
+| 25% to 75% | yellow |
+| under 25% | red |
+
+The green is a soft one on purpose. Most of the time nothing is wrong, and a taskbar that keeps announcing that
+in bright green is a taskbar you stop looking at. Red is the one moment it wants your attention.
+
 **Hover your mouse over it** and a small card appears with the detail:
 
 ![The hover card](docs/hover-card.png)
 
 Each bar is one limit. It shows how much is left and the exact time it refills.
 
-Claude has two limits, so it gets two bars:
+Claude has two limits, so it gets two bars, shortest first:
 
+- **This 5 hours** is a shorter limit that refills more often, roughly every five hours. It is the one most
+  likely to stop you today, so it sits on top.
 - **This week** is your weekly allowance.
-- **This 5 hours** is a shorter limit that refills more often, roughly every five hours.
 
 Codex only reports a weekly limit, so it only gets one bar. Usage never invents a bar for something a provider
 did not actually report.
@@ -40,7 +52,7 @@ pretend it is current.
 
 ## Install
 
-1. Download `Usage-Setup-1.0.0.exe` from the
+1. Download `Usage-Setup-1.1.0.exe` from the
    [latest release](https://github.com/MeltTheManual/Usage-Taskbar/releases/latest).
 2. Run it and follow the steps.
 
@@ -68,7 +80,7 @@ If you would rather check before trusting it, the release notes list the file's 
 of the exact file that was published. You can compare it with this in PowerShell:
 
 ```powershell
-Get-FileHash .\Usage-Setup-1.0.0.exe -Algorithm SHA256
+Get-FileHash .\Usage-Setup-1.1.0.exe -Algorithm SHA256
 ```
 
 If the two match, the file you downloaded is exactly the one that was published.

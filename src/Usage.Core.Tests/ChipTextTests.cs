@@ -24,9 +24,38 @@ public class ChipTextTests
     [Fact]
     public void Marks_low_remaining()
     {
-        var reading = new ProviderReading(ReadingStatus.Ok, 19, null, null, null);
+        var reading = new ProviderReading(ReadingStatus.Ok, 24, null, null, null);
         Assert.True(reading.IsLow);
-        Assert.False(new ProviderReading(ReadingStatus.Ok, 20, null, null, null).IsLow);
+        Assert.False(new ProviderReading(ReadingStatus.Ok, 25, null, null, null).IsLow);
+
+        // The card warns off the same rounded number as the chip, so 24.5 prints "25%" and must not warn.
+        Assert.False(new ProviderReading(ReadingStatus.Ok, 24.5, null, null, null).IsLow);
+        Assert.True(new ProviderReading(ReadingStatus.Ok, 24.4, null, null, null).IsLow);
+    }
+
+    [Fact]
+    public void Chip_colour_bands_split_at_seventy_five_and_twenty_five()
+    {
+        Assert.Equal(ChipLevel.Plenty, ChipText.LevelFor(100));
+        Assert.Equal(ChipLevel.Plenty, ChipText.LevelFor(75));
+        Assert.Equal(ChipLevel.Fair, ChipText.LevelFor(74));
+        Assert.Equal(ChipLevel.Fair, ChipText.LevelFor(25));
+        Assert.Equal(ChipLevel.Low, ChipText.LevelFor(24));
+        Assert.Equal(ChipLevel.Low, ChipText.LevelFor(0));
+    }
+
+    [Fact]
+    public void Chip_colour_follows_the_number_the_chip_actually_prints()
+    {
+        // 74.6 prints as "75%", so it has to be the 75-and-up colour or the chip contradicts itself.
+        var reading = new ProviderReading(ReadingStatus.Ok, 74.6, null, null, null);
+        Assert.Equal("Claude 75%", ChipText.FormatProvider("Claude", reading));
+        Assert.Equal(ChipLevel.Plenty, ChipText.LevelFor(74.6));
+
+        // Same rule at the bottom: 24.5 prints as "25%" and must not be the under-25 colour.
+        Assert.Equal("Claude 25%", ChipText.FormatProvider("Claude", new ProviderReading(ReadingStatus.Ok, 24.5, null, null, null)));
+        Assert.Equal(ChipLevel.Fair, ChipText.LevelFor(24.5));
+        Assert.Equal(ChipLevel.Low, ChipText.LevelFor(24.4));
     }
 
     [Fact]
@@ -50,11 +79,12 @@ public class ChipTextTests
 
         var windows = ChipText.Windows(reading);
 
+        // Shortest window first, because the five-hour limit is the one that stops you today.
         Assert.Equal(2, windows.Count);
-        Assert.Equal("This week", windows[0].Label);
-        Assert.Equal(45, windows[0].Remaining);
-        Assert.Equal("This 5 hours", windows[1].Label);
-        Assert.Equal(33, windows[1].Remaining);
+        Assert.Equal("This 5 hours", windows[0].Label);
+        Assert.Equal(33, windows[0].Remaining);
+        Assert.Equal("This week", windows[1].Label);
+        Assert.Equal(45, windows[1].Remaining);
     }
 
     [Fact]
@@ -74,8 +104,8 @@ public class ChipTextTests
     public void A_window_below_the_threshold_is_marked_low_so_its_meter_turns_amber()
     {
         Assert.True(new RemainingWindow("This week", 2, null).IsLow);
-        Assert.True(new RemainingWindow("This 5 hours", 19, null).IsLow);
-        Assert.False(new RemainingWindow("This week", 20, null).IsLow);
+        Assert.True(new RemainingWindow("This 5 hours", 24, null).IsLow);
+        Assert.False(new RemainingWindow("This week", 25, null).IsLow);
         Assert.False(new RemainingWindow("This 5 hours", 88, null).IsLow);
     }
 
