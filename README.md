@@ -53,7 +53,7 @@ pretend it is current.
 
 ## Install
 
-1. Download `Usage-Setup-1.1.0.exe` from the
+1. Download `Usage-Setup-1.2.0.exe` from the
    [latest release](https://github.com/MeltTheManual/Usage-Taskbar/releases/latest).
 2. Run it and follow the steps.
 
@@ -81,7 +81,7 @@ If you would rather check before trusting it, the release notes list the file's 
 of the exact file that was published. You can compare it with this in PowerShell:
 
 ```powershell
-Get-FileHash .\Usage-Setup-1.1.0.exe -Algorithm SHA256
+Get-FileHash .\Usage-Setup-1.2.0.exe -Algorithm SHA256
 ```
 
 If the two match, the file you downloaded is exactly the one that was published.
