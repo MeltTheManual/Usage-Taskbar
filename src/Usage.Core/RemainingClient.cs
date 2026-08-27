@@ -48,10 +48,17 @@ public sealed class RemainingClient : IDisposable
         _log = log;
     }
 
-    public async Task<RemainingSnapshot> FetchAsync(CancellationToken cancellationToken = default)
+    public async Task<RemainingSnapshot> FetchAsync(
+        bool includeClaude = true,
+        bool includeCodex = true,
+        CancellationToken cancellationToken = default)
     {
-        var claude = await FetchClaudeAsync(cancellationToken).ConfigureAwait(false);
-        var codex = await FetchCodexAsync(cancellationToken).ConfigureAwait(false);
+        var claude = includeClaude
+            ? await FetchClaudeAsync(cancellationToken).ConfigureAwait(false)
+            : ProviderReading.Hidden();
+        var codex = includeCodex
+            ? await FetchCodexAsync(cancellationToken).ConfigureAwait(false)
+            : ProviderReading.Hidden();
         return new RemainingSnapshot(claude, codex);
     }
 

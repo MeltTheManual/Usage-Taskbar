@@ -17,8 +17,8 @@ public static class ChipText
         {
             ReadingStatus.Ok when reading.WeeklyRemaining is { } remaining =>
                 $"{name} {Whole(remaining)}%",
-            // The tool is not on this machine, so there is nothing honest to say about it. Callers drop it.
-            ReadingStatus.NotInstalled => "",
+            // Not on this machine, or the user turned it off. Callers drop either one the same way.
+            ReadingStatus.NotInstalled or ReadingStatus.Hidden => "",
             ReadingStatus.SignIn => $"{name} sign in",
             ReadingStatus.Stale => $"{name} stale",
             _ => $"{name} --"
@@ -75,6 +75,7 @@ public static class ChipText
     public static string StatusLine(ProviderReading reading) => reading.Status switch
     {
         ReadingStatus.NotInstalled => "Not installed on this PC",
+        ReadingStatus.Hidden => "Hidden",
         ReadingStatus.SignIn => "Sign in needed",
         ReadingStatus.Stale => "Last check failed, so no number is shown",
         ReadingStatus.Ok => "No limits reported",

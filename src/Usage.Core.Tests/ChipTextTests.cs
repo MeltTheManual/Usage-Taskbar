@@ -19,6 +19,10 @@ public class ChipTextTests
         // A tool that is not on this PC produces no text at all, so callers can drop it without special cases.
         Assert.Equal("", ChipText.FormatProvider("Codex", ProviderReading.NotInstalled()));
         Assert.Equal("", ChipText.MenuText("Codex", ProviderReading.NotInstalled()));
+        // Same empty text when the user turned the provider off, so the chip and card drop it the same way.
+        Assert.Equal("", ChipText.FormatProvider("Claude", ProviderReading.Hidden()));
+        Assert.Equal("", ChipText.MenuText("Claude", ProviderReading.Hidden()));
+        Assert.True(ProviderReading.Hidden().IsHidden);
     }
 
     [Fact]

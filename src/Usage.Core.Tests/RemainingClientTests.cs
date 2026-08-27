@@ -205,6 +205,30 @@ public class RemainingClientTests : IDisposable
     }
 
     [Fact]
+    public async Task A_turned_off_provider_is_not_fetched()
+    {
+        WriteClaudeLogin();
+        WriteCodexLogin();
+
+        var calls = 0;
+        var handler = new FakeHandler(request =>
+        {
+            calls++;
+            Assert.Contains("chatgpt.com", request.RequestUri!.Host, StringComparison.Ordinal);
+            return FakeHandler.Json(
+                """{ "rate_limit": { "primary_window": { "limit_window_seconds": 604800, "used_percent": 35 } } }""");
+        });
+
+        var snapshot = await NewClient(handler).FetchAsync(includeClaude: false, includeCodex: true);
+
+        Assert.Equal(1, calls);
+        Assert.Equal(ReadingStatus.Hidden, snapshot.Claude.Status);
+        Assert.True(snapshot.Claude.IsHidden);
+        Assert.Equal(ReadingStatus.Ok, snapshot.Codex.Status);
+        Assert.Equal(65, snapshot.Codex.WeeklyRemaining);
+    }
+
+    [Fact]
     public async Task Never_writes_to_the_login_files()
     {
         // The safety rule of the whole app. Usage observes another program's credentials and must never
