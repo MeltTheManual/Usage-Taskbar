@@ -13,10 +13,17 @@ internal sealed class ChipMenu : IDisposable
     private readonly ToolStripMenuItem _claudeHeader;
     private readonly ToolStripMenuItem _codexHeader;
     private readonly ToolStripMenuItem _noLogins;
+    private readonly ToolStripMenuItem _showClaude;
+    private readonly ToolStripMenuItem _showCodex;
     private readonly ToolStripMenuItem _startWithWindows;
+    private readonly DisplaySettings _settings;
+    private readonly Action _refresh;
 
-    public ChipMenu(Action quit, Action refresh)
+    public ChipMenu(Action quit, Action refresh, DisplaySettings settings)
     {
+        _refresh = refresh;
+        _settings = settings;
+
         _claudeHeader = new ToolStripMenuItem("Claude --") { Enabled = false };
         _codexHeader = new ToolStripMenuItem("Codex --") { Enabled = false };
         _noLogins = new ToolStripMenuItem("No Claude Code or Codex login found")
@@ -25,12 +32,25 @@ internal sealed class ChipMenu : IDisposable
             Visible = false
         };
 
+        _showClaude = new ToolStripMenuItem("Show Claude")
+        {
+            CheckOnClick = true,
+            Checked = settings.ShowClaude
+        };
+        _showCodex = new ToolStripMenuItem("Show Codex")
+        {
+            CheckOnClick = true,
+            Checked = settings.ShowCodex
+        };
+        // Subscribed after Checked is seeded so reading the current state does not look like a user click.
+        _showClaude.CheckedChanged += (_, _) => ApplyShowChoice();
+        _showCodex.CheckedChanged += (_, _) => ApplyShowChoice();
+
         _startWithWindows = new ToolStripMenuItem("Start with Windows")
         {
             CheckOnClick = true,
             Checked = WindowsStartup.IsRegistered()
         };
-        // Subscribed after Checked is seeded so reading the current state does not look like a user click.
         _startWithWindows.CheckedChanged += (_, _) => ApplyStartupChoice();
 
         _menu = new ContextMenuStrip();
@@ -38,6 +58,8 @@ internal sealed class ChipMenu : IDisposable
         _menu.Items.Add(_codexHeader);
         _menu.Items.Add(_noLogins);
         _menu.Items.Add(new ToolStripSeparator());
+        _menu.Items.Add(_showClaude);
+        _menu.Items.Add(_showCodex);
         _menu.Items.Add(new ToolStripMenuItem("Refresh now", null, (_, _) => refresh()));
         _menu.Items.Add(_startWithWindows);
         _menu.Items.Add(new ToolStripSeparator());
@@ -59,8 +81,9 @@ internal sealed class ChipMenu : IDisposable
         _claudeHeader.Text = ChipText.MenuText("Claude", snapshot.Claude);
         _codexHeader.Text = ChipText.MenuText("Codex", snapshot.Codex);
 
-        var noneFound = snapshot.Claude.IsHidden && snapshot.Codex.IsHidden;
-        _noLogins.Visible = noneFound;
+        // Only when both tools are actually missing. A provider the user turned off is not "not installed".
+        _noLogins.Visible = snapshot.Claude.Status == ReadingStatus.NotInstalled
+            && snapshot.Codex.Status == ReadingStatus.NotInstalled;
     }
 
     /// <summary>True while the menu is on screen, so the chip does not fight its own menu for z-order.</summary>
@@ -87,6 +110,23 @@ internal sealed class ChipMenu : IDisposable
     }
 
     public void Dispose() => _menu.Dispose();
+
+    private void ApplyShowChoice()
+    {
+        try
+        {
+            _settings.ShowClaude = _showClaude.Checked;
+            _settings.ShowCodex = _showCodex.Checked;
+            _settings.Save();
+            AppLog.Write("show claude=" + (_settings.ShowClaude ? "on" : "off")
+                + " codex=" + (_settings.ShowCodex ? "on" : "off"));
+            _refresh();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("show toggle " + ex.GetType().Name + ": " + ex.Message);
+        }
+    }
 
     private void ApplyStartupChoice()
     {

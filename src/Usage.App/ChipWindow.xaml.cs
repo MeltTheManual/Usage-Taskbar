@@ -97,7 +97,10 @@ internal partial class ChipWindow : Window
 
         if (snapshot.Claude.IsHidden && snapshot.Codex.IsHidden)
         {
-            ClaudeRun.Text = "Usage: no login found";
+            // Keep a word on the taskbar so the right-click menu stays reachable if both were turned off.
+            var bothMissing = snapshot.Claude.Status == ReadingStatus.NotInstalled
+                && snapshot.Codex.Status == ReadingStatus.NotInstalled;
+            ClaudeRun.Text = bothMissing ? "Usage: no login found" : "Usage";
             ClaudeRun.Foreground = QuietBrush;
         }
 
@@ -176,9 +179,8 @@ internal partial class ChipWindow : Window
             Margin = new Thickness(0, 0, 0, 11)
         });
 
-        // A tool that is not on this machine gets no row at all, so the card shows what you actually use
-        // rather than nagging you to install the other one. "first" drives the divider, so it has to mean
-        // "first row actually drawn", not "Claude".
+        // A tool that is not on this machine, or one the user turned off, gets no row at all.
+        // "first" drives the divider, so it has to mean "first row actually drawn", not "Claude".
         var drewOne = false;
         if (!snapshot.Claude.IsHidden)
         {
@@ -194,9 +196,13 @@ internal partial class ChipWindow : Window
 
         if (!drewOne)
         {
+            var bothMissing = snapshot.Claude.Status == ReadingStatus.NotInstalled
+                && snapshot.Codex.Status == ReadingStatus.NotInstalled;
             body.Children.Add(new TextBlock
             {
-                Text = "No Claude Code or Codex login found on this PC.",
+                Text = bothMissing
+                    ? "No Claude Code or Codex login found on this PC."
+                    : "Right-click to choose what appears.",
                 FontFamily = Ui,
                 FontSize = 11.5,
                 Foreground = LabelBrush,

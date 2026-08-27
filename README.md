@@ -44,8 +44,9 @@ Claude has two limits, so it gets two bars, shortest first:
 Codex only reports a weekly limit, so it only gets one bar. Usage never invents a bar for something a provider
 did not actually report.
 
-**Right-click the line** for a small menu: the current numbers, a **Refresh now** button, a **Start with
-Windows** switch, and **Quit**.
+**Right-click the line** for a small menu: the current numbers, **Show Claude** and **Show Codex** switches, a
+**Refresh now** button, a **Start with Windows** switch, and **Quit**. Uncheck a provider and it leaves the
+taskbar and the hover card. Check it again and it comes back. The choice survives a restart.
 
 If a number cannot be read for some reason, Usage says so in words. It will never show you an old number and
 pretend it is current.
@@ -94,14 +95,15 @@ on. If you ever want it again, open it from the Start Menu.
 
 ## There is nothing to set up
 
-No settings. No config file. No account, and no sign-in.
+No settings window. No account, and no sign-in. The Show Claude and Show Codex ticks live on the right-click menu.
 
 Usage reads the login that Claude Code and Codex already keep on your PC. If you are signed in to those tools,
 it just works.
 
 **If you only use one of them, the other simply does not appear.** No blank space, no error message, and no nag
-telling you to install something you never wanted. If neither one is on your PC, Usage says so once rather than
-pretending it knows something.
+telling you to install something you never wanted. If a login is there but you still do not want that provider
+on the taskbar, uncheck it from the right-click menu. If neither one is on your PC, Usage says so once rather
+than pretending it knows something.
 
 It reads what the **currently signed in Windows user** has. So if two people share a PC, each of them sees only
 their own numbers.

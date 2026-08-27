@@ -24,6 +24,8 @@ public partial class App : System.Windows.Application
     private ChipWindow? _chip;
     private ChipMenu? _menu;
     private RemainingClient? _client;
+    private DisplaySettings? _settings;
+    private RemainingSnapshot? _lastRaw;
     private RemainingSnapshot? _lastGood;
     private DispatcherTimer? _refreshTimer;
     private DispatcherTimer? _watchTimer;
@@ -191,7 +193,8 @@ public partial class App : System.Windows.Application
         System.Windows.Forms.Application.EnableVisualStyles();
 
         _client = new RemainingClient(log: AppLog.Write);
-        _menu = new ChipMenu(QuitEverything, () => _ = RefreshSafeAsync());
+        _settings = DisplaySettings.Load();
+        _menu = new ChipMenu(QuitEverything, OnDisplayChanged, _settings);
         _chip = new ChipWindow(_menu);
         _chip.Show();
         AppLog.Write("ui started pid=" + Environment.ProcessId);
@@ -258,7 +261,9 @@ public partial class App : System.Windows.Application
             else
             {
                 using var client = new RemainingClient();
-                snapshot = client.FetchAsync().GetAwaiter().GetResult();
+                var settings = DisplaySettings.Load();
+                snapshot = client.FetchAsync(settings.ShowClaude, settings.ShowCodex).GetAwaiter().GetResult();
+                snapshot = settings.Apply(snapshot);
             }
 
             CardPreview.Save(snapshot, path);
@@ -312,7 +317,9 @@ public partial class App : System.Windows.Application
         RemainingSnapshot snapshot;
         try
         {
-            snapshot = await _client.FetchAsync().ConfigureAwait(true);
+            snapshot = await _client.FetchAsync(
+                includeClaude: _settings?.ShowClaude ?? true,
+                includeCodex: _settings?.ShowCodex ?? true).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
@@ -323,18 +330,42 @@ public partial class App : System.Windows.Application
         try
         {
             snapshot = MarkStaleIfNeeded(snapshot, _lastGood);
+            _lastRaw = snapshot;
             if (snapshot.Claude.Status == ReadingStatus.Ok || snapshot.Codex.Status == ReadingStatus.Ok)
             {
                 _lastGood = snapshot;
             }
 
-            _menu?.Update(snapshot);
-            _chip?.Apply(snapshot);
+            ShowVisible(snapshot);
         }
         catch (Exception ex)
         {
             AppLog.Write("apply " + ex.GetType().Name + ": " + ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Instant chip update when Show Claude or Show Codex is toggled, then a refresh so a newly shown
+    /// provider gets a real number instead of waiting for the three-minute timer.
+    /// </summary>
+    private void OnDisplayChanged()
+    {
+        ShowVisible(_lastRaw);
+        _ = RefreshSafeAsync();
+    }
+
+    private void ShowVisible(RemainingSnapshot? raw)
+    {
+        var snapshot = _settings?.Apply(raw ?? new RemainingSnapshot(
+            ProviderReading.Hidden(),
+            ProviderReading.Hidden())) ?? raw;
+        if (snapshot is null)
+        {
+            return;
+        }
+
+        _menu?.Update(snapshot);
+        _chip?.Apply(snapshot);
     }
 
     private static RemainingSnapshot MarkStaleIfNeeded(RemainingSnapshot current, RemainingSnapshot? previous)

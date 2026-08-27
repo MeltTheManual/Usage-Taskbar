@@ -13,7 +13,13 @@ public enum ReadingStatus
     /// A provider nobody uses is hidden rather than nagged about, so someone who only runs Claude Code never
     /// sees a permanent "Codex sign in" telling them to install something they did not ask for.
     /// </summary>
-    NotInstalled
+    NotInstalled,
+
+    /// <summary>
+    /// The user turned this provider off on the right-click menu. Different from <see cref="NotInstalled"/>:
+    /// the tool may well be here, they just do not want it on the chip. Re-enable from the same menu.
+    /// </summary>
+    Hidden
 }
 
 /// <summary>
@@ -53,8 +59,14 @@ public sealed record ProviderReading(
     public static ProviderReading NotInstalled() =>
         new(ReadingStatus.NotInstalled, null, null, null, null);
 
-    /// <summary>True when this provider should not appear anywhere in the UI at all.</summary>
-    public bool IsHidden => Status == ReadingStatus.NotInstalled;
+    public static ProviderReading Hidden() =>
+        new(ReadingStatus.Hidden, null, null, null, null);
+
+    /// <summary>
+    /// True when this provider should not appear on the chip, the hover card, or the menu number line.
+    /// Covers a tool that is not installed, and a tool the user turned off.
+    /// </summary>
+    public bool IsHidden => Status is ReadingStatus.NotInstalled or ReadingStatus.Hidden;
 
     /// <summary>
     /// True once this provider is low enough to warn about. It defers to the chip's own band function, so the
